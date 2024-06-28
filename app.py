@@ -1,101 +1,143 @@
-from flask import Flask, render_template
+from flask import Flask, render_template_string
 from datetime import datetime
-import pytz
 
 app = Flask(__name__)
 
-# Dictionary of adhkar and duas for different times and occasions
-adhkar_data = {
-    'fajr': [
-        "سبحان الله وبحمده، سبحان الله العظيم",
-        "اللهم صل على محمد وعلى آل محمد كما صليت على إبراهيم وعلى آل إبراهيم، إنك حميد مجيد"
+adhkar_by_time = {
+    "morning": [
+        "أصبحنا وأصبح الملك لله والحمد لله",
+        "سبحان الله وبحمده سبحان الله العظيم",
+        "لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير",
+        "اللهم ما أصبح بي من نعمة أو بأحد من خلقك فمنك وحدك لا شريك لك، فلك الحمد ولك الشكر"
     ],
-    'zuhr': [
-        "الله أكبر",
-        "اللهم اجعلني من المقيمين الصلاة ومن ذرية قيم الصلاة"
+    "noon": [
+        "اللهم اجعلنا من الذين يستمعون القول فيتبعون أحسنه",
+        "اللهم اغفر لنا وارحمنا وتب علينا إنك أنت التواب الرحيم",
+        "اللهم اجعلنا من الذين لا خوف عليهم ولا هم يحزنون"
     ],
-    'asr': [
-        "سبحان الله وبحمده",
-        "اللهم إني أعوذ بك من العجز والكسل والجبن والبخل والهرم، وأعوذ بك من عذاب القبر"
-    ],
-    'maghrib': [
-        "سبحان الله وبحمده، سبحان الله العظيم",
-        "اللهم اجعل لي في قلبي نوراً، وفي لساني نوراً، واجعل لي في سمعي نوراً، واجعل لي من خلفي نوراً، ومن أمامي نوراً، واجعل لي من فوقي نوراً، ومن تحتي نوراً، اللهم أعطني نوراً"
-    ],
-    'isha': [
-        "الله أكبر",
-        "اللهم اغفر لي ولوالدي ولمن دخل بيتي مؤمناً وللمؤمنين والمؤمنات ولا تزد الظالمين إلا تباراً"
-    ],
-    'before_sleep': [
-        "اللهم بسمك أموت وأحيا",
-        "اللهم أعوذ بك من الهم والحزن، وأعوذ بك من العجز والكسل، وأعوذ بك من الجبن والبخل، وأعوذ بك من غلبة الدين وقهر الرجال",
-        "اللهم إني أمسيت أشهدك وأشهد حملة عرشك وملائكتك وجميع خلقك أنك أنت الله لا إله إلا أنت، وأن محمداً عبدك ورسولك، أعوذ بك من شر نفسي ومن شر الشيطان وشركه وأن أقترف على نفسي سوءاً أو أجره إلى مسلم",
-        "اللهم إني أمسيت أعوذ بك من الكفر والفقر، وأعوذ بك من عذاب القبر، لا إله إلا أنت"
-    ],
-    'morning': [
+    "afternoon": [
+        "سبحان الله وبحمده عدد خلقه ورضا نفسه وزنة عرشه ومداد كلماته",
         "اللهم إني أسألك علماً نافعاً ورزقاً طيباً وعملاً متقبلاً",
-        "اللهم أجعل لي من أمري فرجاً، ومن بين يدي فرجاً، ومن خلفي فرجاً، ومن فوقي فرجاً، ومن تحتي فرجاً، ومن عن يميني فرجاً، ومن عن شمالي فرجاً، ومن قدامي فرجاً، وأعطني ما أسألك",
-        "اللهم إني أسألك العافية في الدنيا والآخرة"
+        "اللهم إني أعوذ بك من علم لا ينفع ومن قلب لا يخشع ومن نفس لا تشبع ومن دعوة لا يستجاب لها"
     ],
-    'evening': [
-        "اللهم بك أمسينا، وبك أصبحنا، وبك نحيا، وبك نموت، وإليك المصير",
-        "اللهم لك الحمد كله، ولك الحمد حتى ترضى، ولك الحمد إذا رضيت، ولك الحمد بعد الرضا",
-        "اللهم إني أعوذ بك من الفقر، والقلة، وأعوذ بك من أن أظلم أو أُظلم، وأعوذ بك من الأدران وأعوذ بك من الشقاء"
+    "evening": [
+        "اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك وأنا على عهدك ووعدك ما استطعت",
+        "اللهم اجعلنا من التوابين واجعلنا من المتطهرين",
+        "اللهم صل وسلم على نبينا محمد وعلى آله وصحبه أجمعين"
     ],
-    'special_occasion': [
-        "ربنا آتنا في الدنيا حسنة وفي الآخرة حسنة وقنا عذاب النار",
-        "اللهم اجعل القرآن ربيع قلوبنا، ونور صدورنا، وجلاء أحزاننا وذهاب همومنا",
-        "اللهم إني أسألك علماً نافعاً، ورزقاً طيباً، وعملاً متقبلاً، وتوبةً عن كل ذنبٍ، وشفاءً من كل داء"
-    ],
-    'after_prayer': [
-        "اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام"
-    ],
-    'travel': [
-        "اللهم إنا نعوذ بك من وعثاء السفر، وكآبة المنظر، وسوء المنقلب في المال والأهل"
-    ],
-    'sick': [
-        "اللهم رب الناس، أذهب البأس، واشف أنت الشافي، لا شفاء إلا شفاؤك، شفاءً لا يغادر سقماً"
-    ],
-    'forgiveness': [
-        "اللهم إني أعوذ بك من علمٍ لا ينفع، ومن قلبٍ لا يخشع، ومن نفسٍ لا تشبع، ومن دعاءٍ لا يُسمع"
-    ],
-    'tasbeeh': [
-        "سبحان الله",
-        "الحمد لله",
-        "لا إله إلا الله",
-        "الله أكبر"
+    "night": [
+        "اللهم إني أسألك العفو والعافية في الدنيا والآخرة",
+        "يا حي يا قيوم برحمتك أستغيث، أصلح لي شأني كله ولا تكلني إلى نفسي طرفة عين",
+        "اللهم إني أعوذ بك من الهم والحزن، وأعوذ بك من العجز والكسل، وأعوذ بك من الجبن والبخل، وأعوذ بك من غلبة الدين وقهر الرجال"
     ]
 }
 
-def get_current_time():
-    tz = pytz.timezone('Asia/Riyadh')  # Replace with user's timezone
-    now = datetime.now(tz)
-    current_time = now.strftime('%H:%M')
-    return current_time
+template = """
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أذكار وأدعية اليوم</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e0e0e0;
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .adhkar-list {
+            max-width: 600px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .adhkar-item {
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 150, 136, 0.4);
+            font-size: 18px;
+            line-height: 1.6;
+            text-align: center;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .adhkar-item:hover {
+            transform: translateY(-5px);
+            background-color: #f0f8ff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 15px rgba(0, 150, 136, 0.6);
+        }
+        h1 {
+            color: #00796b;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+        }
+        .time {
+            font-size: 20px;
+            color: #555;
+            margin-bottom: 15px;
+            direction: ltr;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            .adhkar-item {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>أذكار وأدعية اليوم</h1>
+        <p class="time">الوقت الحالي: {{ current_time }}</p>
+        <div class="adhkar-list">
+            {% if adhkar_list %}
+                {% for adhkar in adhkar_list %}
+                    <div class="adhkar-item">
+                        <p>{{ adhkar }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>لا توجد أذكار محددة في هذا الوقت. الرجاء السبحة.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+"""
 
-def get_current_prayer():
-    # This function can be modified to fetch actual prayer times from an API or database
-    current_time = get_current_time()
-
-    if current_time >= '04:00' and current_time < '06:00':
-        return 'fajr'
-    elif current_time >= '12:00' and current_time < '14:00':
-        return 'zuhr'
-    elif current_time >= '15:00' and current_time < '17:00':
-        return 'asr'
-    elif current_time >= '18:00' and current_time < '20:00':
-        return 'maghrib'
-    elif current_time >= '20:00' and current_time < '22:00':
-        return 'isha'
+def get_current_adhkar():
+    now = datetime.now()
+    if 5 <= now.hour < 12:
+        return adhkar_by_time['morning']
+    elif 12 <= now.hour < 15:
+        return adhkar_by_time['noon']
+    elif 15 <= now.hour < 18:
+        return adhkar_by_time['afternoon']
+    elif 18 <= now.hour < 20:
+        return adhkar_by_time['evening']
     else:
-        return 'special_occasion'
+        return adhkar_by_time['night']
 
 @app.route('/')
 def index():
-    current_prayer = get_current_prayer()
-    adhkar_list = adhkar_data.get(current_prayer, adhkar_data['tasbeeh'])  # Default to tasbeeh if no specific adhkar found
-
-    return render_template('index.html', adhkar_list=adhkar_list, current_time=get_current_time())
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    adhkar_list = get_current_adhkar()
+    return render_template_string(template, adhkar_list=adhkar_list, current_time=current_time)
 
 if __name__ == '__main__':
     app.run(debug=True)
