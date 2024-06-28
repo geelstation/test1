@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f0f0;
+            background-color: #e0e0e0;
             color: #333;
             text-align: center;
             margin: 0;
@@ -26,7 +26,7 @@
             margin-top: 20px;
         }
         .adhkar-item {
-            width: 100%; /* عرض كامل */
+            width: 100%;
             margin-bottom: 15px;
             padding: 15px;
             background-color: #fff;
@@ -34,14 +34,12 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 150, 136, 0.4);
             font-size: 18px;
             line-height: 1.6;
-            text-align: center; /* توسيط النص */
+            text-align: center;
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            display: inline-block; /* عرض في سطر واحد */
-            vertical-align: top; /* محاذاة إلى الأعلى */
         }
         .adhkar-item:hover {
-            transform: translateY(-5px); /* تحريك لأعلى عند التحويم */
-            background-color: #e0f7fa;
+            transform: translateY(-5px);
+            background-color: #f0f8ff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 15px rgba(0, 150, 136, 0.6);
         }
         h1 {
@@ -70,7 +68,8 @@
 <body>
     <div class="container">
         <h1>أذكار وأدعية اليوم</h1>
-        <p class="time">الوقت الحالي: {{ current_time }}</p>
+        <p class="time">الوقت الحالي: 2024-06-29 01:41:07</p>
+        <p>هذه الأذكار مناسبة لهذا الوقت:</p>
         <div class="adhkar-list">
             {% if adhkar_list %}
                 {% for adhkar in adhkar_list %}
